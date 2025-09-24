@@ -1,0 +1,1699 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ses Dosyası Kırpma Aracı - Optimize</title>
+    <!-- JSZip kütüphanesi -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4c63d2 0%, #6c5b7b 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            padding: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #4c63d2;
+            border-radius: 15px;
+            padding: 60px 20px;
+            text-align: center;
+            background: #f8f9ff;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .upload-area:hover {
+            border-color: #6c5b7b;
+            background: #f0f2ff;
+            transform: translateY(-2px);
+        }
+
+        .upload-area.dragover {
+            border-color: #6c5b7b;
+            background: #e8ebff;
+        }
+
+        .upload-icon {
+            font-size: 4em;
+            color: #4c63d2;
+            margin-bottom: 20px;
+        }
+
+        .upload-text {
+            font-size: 1.3em;
+            color: #4c63d2;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .upload-subtext {
+            color: #666;
+            font-size: 1em;
+        }
+
+        #fileInput {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .settings-panel {
+            background: #f8f9ff;
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            border: 1px solid #e0e6ff;
+            display: none;
+        }
+
+        .settings-header {
+            color: #4c63d2;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 20px;
+        }
+
+        .setting-group {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .setting-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .setting-description {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .format-options {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .format-option {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .format-option:hover {
+            border-color: #4c63d2;
+        }
+
+        .format-option.selected {
+            border-color: #4c63d2;
+            background: #f0f2ff;
+            color: #4c63d2;
+            font-weight: 600;
+        }
+
+        .quality-slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e0e0e0;
+            outline: none;
+            margin-bottom: 10px;
+        }
+
+        .quality-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4c63d2;
+            cursor: pointer;
+        }
+
+        .quality-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4c63d2;
+            cursor: pointer;
+            border: none;
+        }
+
+        .quality-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8em;
+            color: #666;
+        }
+
+        .quality-info {
+            text-align: center;
+            margin-top: 10px;
+            padding: 10px;
+            background: #f0f2ff;
+            border-radius: 8px;
+            font-weight: 500;
+            color: #4c63d2;
+        }
+
+        .size-estimation {
+            background: #fff3e0;
+            border: 1px solid #ffb74d;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+            display: none;
+        }
+
+        .size-estimation h4 {
+            color: #f57c00;
+            margin-bottom: 8px;
+        }
+
+        .size-comparison {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+
+        .size-item {
+            text-align: center;
+        }
+
+        .size-value {
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .size-label {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .file-info {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 25px;
+            margin: 20px 0;
+            border-left: 5px solid #4c63d2;
+            display: none;
+        }
+
+        .file-info h3 {
+            color: #4c63d2;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+        }
+
+        .info-label {
+            font-weight: 500;
+            color: #555;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: 600;
+        }
+
+        .progress-container {
+            margin: 30px 0;
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #4c63d2 0%, #6c5b7b 100%);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #666;
+            font-weight: 500;
+        }
+
+        .error-message {
+            background: #ffebee;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border-left: 5px solid #d32f2f;
+            display: none;
+        }
+
+        .supported-formats {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 15px;
+        }
+
+        .process-button {
+            background: linear-gradient(135deg, #4c63d2 0%, #6c5b7b 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            display: none;
+        }
+
+        .process-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 99, 210, 0.4);
+        }
+
+        .process-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .download-section {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .download-list {
+            background: #f8f9ff;
+            border-radius: 10px;
+            padding: 20px;
+            border: 1px solid #e0e6ff;
+        }
+
+        .download-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .download-info {
+            flex: 1;
+        }
+
+        .download-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .download-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .download-button {
+            background: #4c63d2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background 0.3s ease;
+        }
+
+        .download-button:hover {
+            background: #3a4db5;
+        }
+
+        .download-all-button {
+            background: linear-gradient(135deg, #4c63d2 0%, #6c5b7b 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 15px;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .download-all-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(76, 99, 210, 0.3);
+        }
+
+        .segment-duration-input {
+            width: 80px;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #4c63d2;
+            transition: all 0.3s ease;
+        }
+
+        .segment-duration-input:focus {
+            outline: none;
+            border-color: #4c63d2;
+            box-shadow: 0 0 0 3px rgba(76, 99, 210, 0.1);
+        }
+
+        .segment-duration-input:hover {
+            border-color: #6c5b7b;
+        }
+
+        @media (max-width: 768px) {
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .format-options {
+                flex-direction: column;
+            }
+            
+            .size-comparison {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 40px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Optimize Ses Dosyası Kırpma Aracı</h1>
+            <p>Ses dosyalarınızı istediğiniz sürelerde segmentlere bölün - Akıllı sıkıştırma ve segment birleştirme ile</p>
+        </div>
+
+        <div class="main-content">
+            <div class="upload-area" id="uploadArea">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Dosyayı Buraya Sürükle veya Tıkla</div>
+                <div class="upload-subtext">Maksimum 500MB - MP3, WAV, M4A, OGG formatları desteklenir</div>
+                <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg">
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+
+            <div class="settings-panel" id="settingsPanel">
+                <div class="settings-header">
+                    <span>⚙️</span>
+                    <span>Çıktı Ayarları</span>
+                </div>
+                
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label class="setting-label">Segment Süresi</label>
+                        <div class="setting-description">Her segmentin uzunluğunu dakika olarak belirleyin.</div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="segmentDuration" min="1" max="120" value="20" 
+                                   class="segment-duration-input">
+                            <span style="color: #666;">dakika</span>
+                        </div>
+                        <div style="font-size: 0.8em; color: #666;">
+                            💡 Önerilen: Konuşma için 15-30dk, Müzik için 10-20dk
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Minimum Son Segment</label>
+                        <div class="setting-description">Son segment bu süreden kısa ise önceki segmente birleştirilir.</div>
+                        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                            <input type="number" id="minLastSegment" min="0" max="30" value="2" 
+                                   class="segment-duration-input">
+                            <span style="color: #666;">dakika</span>
+                        </div>
+                        <div style="font-size: 0.8em; color: #666;">
+                            💡 0 = Birleştirme, 1-5dk = Esnek, 5+dk = Sert kural
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label class="setting-label">Çıktı Formatı</label>
+                        <div class="setting-description">Dosya formatını seçin. MP3 daha küçük dosyalar oluşturur.</div>
+                        <div class="format-options">
+                            <div class="format-option selected" data-format="mp3">
+                                <div>🎵 MP3*</div>
+                                <div style="font-size: 0.8em; color: #666;">Çok küçük boyut</div>
+                            </div>
+                            <div class="format-option" data-format="wav">
+                                <div>🔊 WAV</div>
+                                <div style="font-size: 0.8em; color: #666;">Optimize kalite</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Segment Önizleme</label>
+                        <div class="setting-description">Seçilen ayarlara göre segment bilgileri.</div>
+                        <div id="segmentPreview" style="background: #f0f2ff; padding: 15px; border-radius: 8px; margin-top: 10px;">
+                            <div style="font-weight: 600; color: #4c63d2; margin-bottom: 8px;">📊 Segment Bilgisi</div>
+                            <div id="previewText" style="color: #666;">Dosya seçildikten sonra gösterilecek</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-grid">
+                    <div class="setting-group">
+                        <label class="setting-label">Ses Kalitesi</label>
+                        <div class="setting-description">Kalite ile dosya boyutu arasında denge kurun.</div>
+                        <input type="range" class="quality-slider" id="qualitySlider" min="0" max="2" value="0" step="1">
+                        <div class="quality-labels">
+                            <span>Düşük</span>
+                            <span>Orta</span>
+                            <span>Yüksek</span>
+                        </div>
+                        <div class="quality-info" id="qualityInfo">Orta Kalite - 128 kbps</div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label class="setting-label">Dosya Boyutu Önizleme</label>
+                        <div class="setting-description">Seçilen kaliteye göre boyut tahmini.</div>
+                        
+                    </div>
+                </div>
+                
+                <div class="size-estimation" id="sizeEstimation">
+                    <h4>📊 Boyut Tahmini</h4>
+                    <div class="size-comparison">
+                        <div class="size-item">
+                            <div class="size-value" id="originalSize">-</div>
+                            <div class="size-label">Orijinal</div>
+                        </div>
+                        <div class="size-item">
+                            <div class="size-value" id="estimatedSize">-</div>
+                            <div class="size-label">Tahmini</div>
+                        </div>
+                        <div class="size-item">
+                            <div class="size-value" id="savingsPercent">-</div>
+                            <div class="size-label">Tasarruf</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <h3>📋 Dosya Bilgileri</h3>
+                <div class="info-row">
+                    <span class="info-label">Dosya Adı:</span>
+                    <span class="info-value" id="fileName">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Dosya Boyutu:</span>
+                    <span class="info-value" id="fileSize">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Toplam Süre:</span>
+                    <span class="info-value" id="fileDuration">-</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Segment Sayısı:</span>
+                    <span class="info-value" id="segmentCount">-</span>
+                </div>
+            </div>
+
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="progress-text" id="progressText">İşlem başlatılıyor...</div>
+            </div>
+
+            <button class="process-button" id="processButton">
+                🎵 Ses Dosyasını Kırp ve İndir
+            </button>
+
+            <div class="download-section" id="downloadSection">
+                <div class="download-list" id="downloadList">
+                    <h3 style="color: #4c63d2; margin-bottom: 15px;">📥 İndirme Bağlantıları</h3>
+                    <div id="downloadItems"></div>
+                    <button class="download-all-button" id="downloadAllButton">
+                        📦 Tümünü İndir (ZIP)
+                    </button>
+                    <button class="download-all-button" id="downloadAllIndividualButton" style="margin-top: 10px; background: linear-gradient(135deg, #2196f3 0%, #21cbf3 100%);">
+                        📥 Tümünü Tek Tek İndir
+                    </button>
+                    <button class="download-all-button" id="downloadToFolderButton" style="margin-top: 10px; background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);">
+                        📁 Klasöre Kaydet
+                    </button>
+                </div>
+            </div>
+
+            <div class="supported-formats">
+                <strong>Desteklenen Formatlar:</strong> MP3, WAV, M4A, OGG | 
+                <strong>Optimize Çıktı:</strong> MP3* (optimize WAV) veya WAV | 
+                <strong>*MP3:</strong> Gerçek MP3 değil, optimize WAV formatı
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class OptimizedAudioSplitter {
+            constructor() {
+                this.currentFile = null;
+                this.audioContext = null;
+                this.audioBuffer = null;
+                this.SEGMENT_DURATION_MINUTES = 20; // Dakika cinsinden - ayarlanabilir
+                this.MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
+                this.processedSegments = []; // İşlenmiş segmentleri tutacak
+                
+                this.supportedFormats = ['mp3', 'wav', 'm4a', 'ogg'];
+                
+                // Ayarlar
+                this.outputFormat = 'mp3';
+                this.quality = 0; // 0: Düşük (En küçük dosya), 1: Orta, 2: Yüksek
+                
+                // Kalite ayarları - ÇOK DAHA AGGRESSIVE
+                this.qualitySettings = {
+                    mp3: {
+                        0: { bitrate: 96, sampleRate: 16000, bitDepth: 8, name: 'Mini Boyut - 16kHz 8-bit (ÇOK KÜÇÜK)' },
+                        1: { bitrate: 128, sampleRate: 22050, bitDepth: 8, name: 'Küçük Boyut - 22kHz 8-bit (KÜÇÜK)' },
+                        2: { bitrate: 192, sampleRate: 32000, bitDepth: 16, name: 'Normal Boyut - 32kHz 16-bit' }
+                    },
+                    wav: {
+                        0: { bitrate: 16, sampleRate: 16000, bitDepth: 8, name: 'Mini WAV - 16kHz 8-bit (ÇOK KÜÇÜK)' },
+                        1: { bitrate: 16, sampleRate: 22050, bitDepth: 8, name: 'Küçük WAV - 22kHz 8-bit (KÜÇÜK)' },
+                        2: { bitrate: 24, sampleRate: 32000, bitDepth: 16, name: 'Normal WAV - 32kHz 16-bit' }
+                    }
+                };
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.updateQualityInfo();
+                
+                // Başlangıç segment süresini input'tan al (elements initialized olduktan sonra)
+                this.SEGMENT_DURATION_MINUTES = parseInt(this.segmentDurationInput.value) || 20;
+                this.MIN_LAST_SEGMENT_DURATION = parseInt(this.minLastSegmentInput.value) * 60; // Dakikayı saniyeye çevir
+                if (isNaN(this.MIN_LAST_SEGMENT_DURATION) || this.MIN_LAST_SEGMENT_DURATION < 0) {
+                    this.MIN_LAST_SEGMENT_DURATION = 0; // 0'dan küçük olamaz
+                }
+            }
+
+            initializeElements() {
+                this.uploadArea = document.getElementById('uploadArea');
+                this.fileInput = document.getElementById('fileInput');
+                this.errorMessage = document.getElementById('errorMessage');
+                this.settingsPanel = document.getElementById('settingsPanel');
+                this.fileInfo = document.getElementById('fileInfo');
+                this.progressContainer = document.getElementById('progressContainer');
+                this.progressFill = document.getElementById('progressFill');
+                this.progressText = document.getElementById('progressText');
+                
+                // File info elements
+                this.fileName = document.getElementById('fileName');
+                this.fileSize = document.getElementById('fileSize');
+                this.fileDuration = document.getElementById('fileDuration');
+                this.segmentCount = document.getElementById('segmentCount');
+                
+                // Settings elements
+                this.formatOptions = document.querySelectorAll('.format-option');
+                this.qualitySlider = document.getElementById('qualitySlider');
+                this.qualityInfo = document.getElementById('qualityInfo');
+                this.sizeEstimation = document.getElementById('sizeEstimation');
+                this.originalSize = document.getElementById('originalSize');
+                this.estimatedSize = document.getElementById('estimatedSize');
+                this.savingsPercent = document.getElementById('savingsPercent');
+                
+                // Process and download elements
+                this.processButton = document.getElementById('processButton');
+                this.downloadSection = document.getElementById('downloadSection');
+                this.downloadItems = document.getElementById('downloadItems');
+                this.downloadAllButton = document.getElementById('downloadAllButton');
+                this.downloadAllIndividualButton = document.getElementById('downloadAllIndividualButton'); // Yeni eklenen buton
+                this.downloadToFolderButton = document.getElementById('downloadToFolderButton'); // Yeni eklenen buton
+                
+                // Segment settings elements
+                this.segmentDurationInput = document.getElementById('segmentDuration');
+                this.minLastSegmentInput = document.getElementById('minLastSegment'); // Yeni eklenen input
+                this.segmentPreview = document.getElementById('segmentPreview');
+                this.previewText = document.getElementById('previewText');
+            }
+
+            bindEvents() {
+                // File input change event
+                this.fileInput.addEventListener('change', (e) => {
+                    console.log('File input changed:', e.target.files);
+                    if (e.target.files.length > 0) {
+                        this.processFile(e.target.files[0]);
+                    }
+                });
+                
+                // Upload area click event (fallback)
+                this.uploadArea.addEventListener('click', (e) => {
+                    // If click is not on the file input itself, trigger it
+                    if (e.target !== this.fileInput) {
+                        console.log('Upload area clicked, triggering file input');
+                        this.fileInput.click();
+                    }
+                });
+                
+                // Drag and drop events
+                this.uploadArea.addEventListener('dragover', this.handleDragOver.bind(this));
+                this.uploadArea.addEventListener('dragleave', this.handleDragLeave.bind(this));
+                this.uploadArea.addEventListener('drop', this.handleDrop.bind(this));
+                
+                // Prevent default drag behaviors on document
+                document.addEventListener('dragover', (e) => e.preventDefault());
+                document.addEventListener('drop', (e) => e.preventDefault());
+                
+                // Settings events
+                this.formatOptions.forEach(option => {
+                    option.addEventListener('click', this.handleFormatChange.bind(this));
+                });
+                
+                this.qualitySlider.addEventListener('input', this.handleQualityChange.bind(this));
+                
+                // Process button event
+                this.processButton.addEventListener('click', this.startProcessing.bind(this));
+                
+                // Download all button event
+                this.downloadAllButton.addEventListener('click', this.downloadAllSegments.bind(this));
+                this.downloadAllIndividualButton.addEventListener('click', this.downloadAllIndividualSegments.bind(this)); // Yeni buton için event
+                this.downloadToFolderButton.addEventListener('click', this.downloadAllToFolder.bind(this)); // Yeni buton için event
+                
+                // Segment duration change event
+                this.segmentDurationInput.addEventListener('input', this.handleSegmentDurationChange.bind(this));
+                this.minLastSegmentInput.addEventListener('input', this.handleMinLastSegmentChange.bind(this)); // Yeni input için event
+            }
+
+            handleSegmentDurationChange(e) {
+                this.SEGMENT_DURATION_MINUTES = parseInt(e.target.value) || 20;
+                
+                // Segment bilgilerini güncelle
+                if (this.audioBuffer) {
+                    this.calculateSegments();
+                    this.updateSegmentPreview();
+                    this.updateSizeEstimation();
+                }
+            }
+
+            handleMinLastSegmentChange(e) {
+                this.MIN_LAST_SEGMENT_DURATION = parseInt(e.target.value) * 60; // Dakikayı saniyeye çevir
+                if (isNaN(this.MIN_LAST_SEGMENT_DURATION) || this.MIN_LAST_SEGMENT_DURATION < 0) {
+                    this.MIN_LAST_SEGMENT_DURATION = 0; // 0'dan küçük olamaz
+                }
+                
+                // Segment bilgilerini güncelle (sadece dosya seçildiyse)
+                if (this.audioBuffer) {
+                    this.calculateSegments();
+                    this.updateSegmentPreview();
+                    this.updateSizeEstimation();
+                }
+            }
+
+            updateSegmentPreview() {
+                if (!this.audioBuffer) {
+                    this.previewText.textContent = 'Dosya seçildikten sonra gösterilecek';
+                    return;
+                }
+                
+                const totalDuration = this.audioBuffer.duration;
+                const segmentDurationSeconds = this.SEGMENT_DURATION_MINUTES * 60;
+                const MIN_LAST_SEGMENT_DURATION = this.MIN_LAST_SEGMENT_DURATION; // Yeni eklenen input'tan al
+                
+                // Segment sayısını doğru hesapla
+                let segmentCount = Math.floor(totalDuration / segmentDurationSeconds);
+                let remainingTime = totalDuration % segmentDurationSeconds;
+                
+                // Eğer kalan süre 1 saniyeden fazlaysa ek segment say
+                if (remainingTime >= 1) {
+                    segmentCount += 1;
+                }
+                
+                // Son segment 2 dakikadan az ise, bir önceki segmente birleştir
+                let isLastSegmentMerged = false;
+                if (remainingTime > 0 && remainingTime < MIN_LAST_SEGMENT_DURATION && segmentCount > 1) {
+                    segmentCount -= 1; // Son segmenti iptal et
+                    isLastSegmentMerged = true;
+                }
+                
+                let previewHTML = `
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>📊 Toplam Segment:</span>
+                        <span style="font-weight: 600;">${segmentCount} adet</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                        <span>⏱️ Her Segment:</span>
+                        <span style="font-weight: 600;">${this.SEGMENT_DURATION_MINUTES} dakika</span>
+                    </div>
+                `;
+                
+                // Son segment birleştirilmişse bilgilendirme göster
+                if (isLastSegmentMerged) {
+                    const lastSegmentDuration = segmentDurationSeconds + remainingTime;
+                    const lastSegmentMinutes = Math.floor(lastSegmentDuration / 60);
+                    const lastSegmentSeconds = Math.floor(lastSegmentDuration % 60);
+                    previewHTML += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>🔚 Son Segment:</span>
+                            <span style="font-weight: 600;">${lastSegmentMinutes}:${lastSegmentSeconds.toString().padStart(2, '0')}</span>
+                        </div>
+                        <div style="font-size: 0.8em; color: #f57c00; margin-top: 8px;">
+                            💡 Son segment ${this.MIN_LAST_SEGMENT_DURATION / 60}dk'dan kısa olduğu için önceki segmente birleştirildi
+                        </div>
+                    `;
+                } else if (remainingTime >= 1 && segmentCount > 1) {
+                    // Normal son segment bilgisi (birleştirilmemişse)
+                    const lastSegmentMinutes = Math.floor(remainingTime / 60);
+                    const lastSegmentSeconds = Math.floor(remainingTime % 60);
+                    previewHTML += `
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>🔚 Son Segment:</span>
+                            <span style="font-weight: 600;">${lastSegmentMinutes}:${lastSegmentSeconds.toString().padStart(2, '0')}</span>
+                        </div>
+                    `;
+                }
+                
+                this.previewText.innerHTML = previewHTML;
+            }
+
+            handleFormatChange(e) {
+                this.formatOptions.forEach(opt => opt.classList.remove('selected'));
+                e.currentTarget.classList.add('selected');
+                this.outputFormat = e.currentTarget.dataset.format;
+                this.updateQualityInfo();
+                this.updateSizeEstimation();
+            }
+
+            handleQualityChange(e) {
+                this.quality = parseInt(e.target.value);
+                this.updateQualityInfo();
+                this.updateSizeEstimation();
+            }
+
+            updateQualityInfo() {
+                const settings = this.qualitySettings[this.outputFormat][this.quality];
+                this.qualityInfo.textContent = settings.name;
+            }
+
+            updateSizeEstimation() {
+                if (!this.audioBuffer) return;
+                
+                const duration = this.audioBuffer.duration;
+                const originalSizeMB = this.currentFile.size / (1024 * 1024);
+                const settings = this.qualitySettings[this.outputFormat][this.quality];
+                
+                let estimatedSizeMB;
+                
+                if (this.outputFormat === 'mp3') {
+                    // Çok agresif sıkıştırma hesaplama
+                    const channels = Math.min(this.audioBuffer.numberOfChannels, 1); // Mono yap
+                    const sampleRate = settings.sampleRate;
+                    const bitDepth = settings.bitDepth;
+                    
+                    // Ham boyut hesaplama
+                    estimatedSizeMB = (sampleRate * bitDepth * channels * duration) / (8 * 1024 * 1024);
+                    
+                    // Çok agresif sıkıştırma faktörü (%85 sıkıştırma)
+                    if (this.quality === 0) {
+                        estimatedSizeMB = estimatedSizeMB * 0.15; // %85 sıkıştırma
+                    } else if (this.quality === 1) {
+                        estimatedSizeMB = estimatedSizeMB * 0.20; // %80 sıkıştırma  
+                    } else {
+                        estimatedSizeMB = estimatedSizeMB * 0.25; // %75 sıkıştırma
+                    }
+                } else {
+                    // WAV agresif optimize
+                    const channels = Math.min(this.audioBuffer.numberOfChannels, 1); // Mono yap
+                    const sampleRate = settings.sampleRate;
+                    const bitDepth = settings.bitDepth;
+                    
+                    estimatedSizeMB = (sampleRate * bitDepth * channels * duration) / (8 * 1024 * 1024);
+                    
+                    // WAV için de ek sıkıştırma (%50)
+                    estimatedSizeMB = estimatedSizeMB * 0.5;
+                }
+                
+                const savings = ((originalSizeMB - estimatedSizeMB) / originalSizeMB) * 100;
+                
+                this.originalSize.textContent = originalSizeMB.toFixed(1) + ' MB';
+                this.estimatedSize.textContent = estimatedSizeMB.toFixed(1) + ' MB';
+                this.savingsPercent.textContent = Math.max(0, savings).toFixed(0) + '%';
+                
+                // Uyarı mesajı ekle
+                if (estimatedSizeMB > originalSizeMB) {
+                    this.savingsPercent.textContent = '+' + Math.abs(savings).toFixed(0) + '% (Büyük)';
+                    this.savingsPercent.style.color = '#ff5722';
+                } else {
+                    this.savingsPercent.style.color = '#4caf50';
+                }
+                
+                this.sizeEstimation.style.display = 'block';
+            }
+
+            handleDragOver(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.uploadArea.classList.add('dragover');
+            }
+
+            handleDragLeave(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.uploadArea.classList.remove('dragover');
+            }
+
+            handleDrop(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                this.uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                console.log('Files dropped:', files);
+                if (files.length > 0) {
+                    this.processFile(files[0]);
+                }
+            }
+
+            async processFile(file) {
+                console.log('Processing file:', file.name, file.type, file.size);
+                this.hideError();
+                
+                // Önceki dosya verilerini temizle
+                this.resetPreviousData();
+                
+                this.currentFile = file;
+
+                // Dosya doğrulama
+                if (!this.validateFile(file)) {
+                    return;
+                }
+
+                try {
+                    // Dosya bilgilerini göster
+                    this.showFileInfo(file);
+                    this.settingsPanel.style.display = 'block';
+                    this.progressContainer.style.display = 'block';
+                    
+                    // Progress göster
+                    this.updateProgress(0, 'Dosya okunuyor...');
+                    
+                    // Audio buffer oluştur
+                    await this.createAudioBuffer(file);
+                    
+                    this.updateProgress(50, 'Segmentler hesaplanıyor...');
+                    
+                    // Segment bilgilerini hesapla
+                    this.calculateSegments();
+                    
+                    // Boyut tahminini güncelle
+                    this.updateSizeEstimation();
+                    
+                    this.updateProgress(100, 'Hazır! Ayarları değiştirebilir ve işleme başlayabilirsiniz.');
+                    
+                } catch (error) {
+                    console.error('Dosya işleme hatası:', error);
+                    this.showError('Dosya işlenirken bir hata oluştu: ' + error.message);
+                }
+            }
+
+            resetPreviousData() {
+                // Önceki dosya verilerini temizle
+                this.audioBuffer = null;
+                this.processedSegments = [];
+                
+                // UI elementlerini sıfırla
+                this.downloadSection.style.display = 'none';
+                this.processButton.style.display = 'none';
+                this.processButton.disabled = false;
+                this.processButton.textContent = '🎵 Ses Dosyasını Kırp ve İndir';
+                
+                // Download butonlarını sıfırla
+                this.downloadAllButton.disabled = false;
+                this.downloadAllButton.textContent = '📦 Tümünü İndir (ZIP)';
+                this.downloadAllIndividualButton.disabled = false;
+                this.downloadAllIndividualButton.textContent = '📥 Tümünü Tek Tek İndir';
+                this.downloadToFolderButton.disabled = false;
+                this.downloadToFolderButton.textContent = '📁 Klasöre Kaydet';
+                
+                // Progress bar'ı sıfırla
+                this.progressFill.style.width = '0%';
+                this.progressText.textContent = 'İşlem başlatılıyor...';
+                
+                // Download items'ı temizle
+                if (this.downloadItems) {
+                    this.downloadItems.innerHTML = '';
+                }
+                
+                // Segment preview'ı sıfırla
+                this.previewText.textContent = 'Dosya seçildikten sonra gösterilecek';
+                
+                // Size estimation'ı gizle
+                this.sizeEstimation.style.display = 'none';
+                
+                console.log('Önceki dosya verileri temizlendi, yeni dosya için hazır');
+            }
+
+            validateFile(file) {
+                // Format kontrolü
+                const fileExtension = file.name.split('.').pop().toLowerCase();
+                const mimeType = file.type.toLowerCase();
+                
+                const isValidExtension = this.supportedFormats.includes(fileExtension);
+                const isValidMimeType = mimeType.startsWith('audio/');
+                
+                if (!isValidExtension && !isValidMimeType) {
+                    this.showError('Bu dosya formatı desteklenmiyor. Lütfen MP3, WAV, M4A veya OGG dosyası yükleyin.');
+                    return false;
+                }
+
+                // Boyut kontrolü
+                if (file.size > this.MAX_FILE_SIZE) {
+                    this.showError('Dosya çok büyük. Maksimum 500MB yükleyebilirsiniz.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            showFileInfo(file) {
+                this.fileName.textContent = file.name;
+                this.fileSize.textContent = this.formatFileSize(file.size);
+                this.fileInfo.style.display = 'block';
+            }
+
+            async createAudioBuffer(file) {
+                try {
+                    // AudioContext oluştur
+                    if (!this.audioContext) {
+                        this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    }
+                    
+                    // Dosyayı ArrayBuffer olarak oku
+                    const arrayBuffer = await this.fileToArrayBuffer(file);
+                    
+                    // Audio buffer oluştur
+                    this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                    
+                    console.log('Audio buffer created:', {
+                        duration: this.audioBuffer.duration,
+                        sampleRate: this.audioBuffer.sampleRate,
+                        channels: this.audioBuffer.numberOfChannels
+                    });
+                    
+                } catch (error) {
+                    throw new Error('Ses dosyası okunamadı: ' + error.message);
+                }
+            }
+
+            fileToArrayBuffer(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = e => resolve(e.target.result);
+                    reader.onerror = e => reject(new Error('Dosya okunamadı'));
+                    reader.readAsArrayBuffer(file);
+                });
+            }
+
+            async startProcessing() {
+                if (!this.audioBuffer) {
+                    this.showError('Önce bir ses dosyası seçmelisiniz.');
+                    return;
+                }
+
+                try {
+                    this.processButton.disabled = true;
+                    this.processButton.textContent = '⏳ İşleniyor...';
+                    this.processedSegments = [];
+                    
+                    await this.processAudioSegments();
+                    
+                    this.processButton.style.display = 'none';
+                    this.downloadSection.style.display = 'block';
+                    this.updateProgress(100, 'İşlem tamamlandı! Dosyalar hazır.');
+                    
+                } catch (error) {
+                    console.error('İşleme hatası:', error);
+                    this.showError('İşleme sırasında bir hata oluştu: ' + error.message);
+                    this.processButton.disabled = false;
+                    this.processButton.textContent = '🎵 Ses Dosyasını Kırp ve İndir';
+                }
+            }
+
+            async processAudioSegments() {
+                const totalDuration = this.audioBuffer.duration;
+                const segmentDurationSeconds = this.SEGMENT_DURATION_MINUTES * 60;
+                const MIN_LAST_SEGMENT_DURATION = this.MIN_LAST_SEGMENT_DURATION; // Yeni eklenen input'tan al
+                
+                // Segment sayısını doğru hesapla
+                let segmentCount = Math.floor(totalDuration / segmentDurationSeconds);
+                let remainingTime = totalDuration % segmentDurationSeconds;
+                
+                // Eğer kalan süre 1 saniyeden fazlaysa ek segment say
+                if (remainingTime >= 1) {
+                    segmentCount += 1;
+                }
+                
+                // Son segment 2 dakikadan az ise, bir önceki segmente birleştir
+                let isLastSegmentMerged = false;
+                if (remainingTime > 0 && remainingTime < MIN_LAST_SEGMENT_DURATION && segmentCount > 1) {
+                    segmentCount -= 1; // Son segmenti iptal et
+                    isLastSegmentMerged = true;
+                }
+                
+                this.downloadItems.innerHTML = '';
+                
+                for (let i = 0; i < segmentCount; i++) {
+                    const startTime = i * segmentDurationSeconds;
+                    let endTime;
+                    
+                    // Son segment ve birleştirilmişse
+                    if (i === segmentCount - 1 && isLastSegmentMerged) {
+                        endTime = totalDuration; // Son segmenti dosya sonuna kadar uzat
+                    } else {
+                        endTime = Math.min((i + 1) * segmentDurationSeconds, totalDuration);
+                    }
+                    
+                    const segmentDuration = endTime - startTime;
+                    
+                    // Çok küçük segmentleri atla (1 saniyeden az)
+                    if (segmentDuration < 1) {
+                        console.log(`Segment ${i + 1} çok küçük, atlanıyor: ${segmentDuration} saniye`);
+                        continue;
+                    }
+                    
+                    const progressPercent = (i / segmentCount) * 100;
+                    this.updateProgress(progressPercent, `Segment ${i + 1}/${segmentCount} işleniyor...`);
+                    
+                    // Segment oluştur
+                    const segmentBuffer = this.createSegmentBuffer(startTime, segmentDuration);
+                    const audioBlob = await this.bufferToBlob(segmentBuffer);
+                    
+                    const segmentInfo = {
+                        index: i + 1,
+                        startTime: startTime,
+                        endTime: endTime,
+                        duration: segmentDuration,
+                        blob: audioBlob,
+                        filename: this.generateFilename(i + 1)
+                    };
+                    
+                    this.processedSegments.push(segmentInfo);
+                    this.addDownloadItem(segmentInfo);
+                    
+                    // Kısa bir bekleme ekle (UI'nin donmaması için)
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            createSegmentBuffer(startTime, duration) {
+                const sampleRate = this.audioBuffer.sampleRate;
+                const startSample = Math.floor(startTime * sampleRate);
+                const durationSamples = Math.floor(duration * sampleRate);
+                const numberOfChannels = this.audioBuffer.numberOfChannels;
+                
+                const segmentBuffer = this.audioContext.createBuffer(
+                    numberOfChannels,
+                    durationSamples,
+                    sampleRate
+                );
+                
+                for (let channel = 0; channel < numberOfChannels; channel++) {
+                    const originalData = this.audioBuffer.getChannelData(channel);
+                    const segmentData = segmentBuffer.getChannelData(channel);
+                    
+                    for (let i = 0; i < durationSamples; i++) {
+                        const originalIndex = startSample + i;
+                        if (originalIndex < originalData.length) {
+                            segmentData[i] = originalData[originalIndex];
+                        } else {
+                            segmentData[i] = 0;
+                        }
+                    }
+                }
+                
+                return segmentBuffer;
+            }
+
+            async bufferToBlob(buffer) {
+                if (this.outputFormat === 'wav') {
+                    return this.bufferToWav(buffer);
+                } else {
+                    // MP3 için basit WAV formatı kullanıyoruz (gerçek MP3 encoding için ek kütüphane gerekir)
+                    return this.bufferToWav(buffer);
+                }
+            }
+
+            bufferToWav(buffer) {
+                const settings = this.qualitySettings[this.outputFormat][this.quality];
+                const originalSampleRate = buffer.sampleRate;
+                const targetSampleRate = settings.sampleRate;
+                const bitDepth = settings.bitDepth || 16;
+                
+                // MONO'ya çevir (stereo'dan mono yap - çok daha küçük)
+                const numberOfChannels = 1; // Zorla mono
+                
+                // Çok agresif downsampling
+                const downsampleRatio = Math.max(2, Math.ceil(originalSampleRate / targetSampleRate));
+                const newLength = Math.floor(buffer.length / downsampleRatio);
+                
+                // Yeni mono buffer oluştur
+                const resampledBuffer = this.audioContext.createBuffer(
+                    1, // Mono
+                    newLength,
+                    targetSampleRate
+                );
+                
+                // Stereo'dan mono'ya + downsampling
+                const newData = resampledBuffer.getChannelData(0);
+                const originalChannels = buffer.numberOfChannels;
+                
+                for (let i = 0; i < newLength; i++) {
+                    const originalIndex = i * downsampleRatio;
+                    if (originalIndex < buffer.length) {
+                        let sampleSum = 0;
+                        
+                        // Tüm kanalları mono'ya miksle
+                        for (let ch = 0; ch < originalChannels; ch++) {
+                            sampleSum += buffer.getChannelData(ch)[originalIndex] || 0;
+                        }
+                        
+                        // Ortalama al (mono)
+                        newData[i] = sampleSum / originalChannels;
+                    } else {
+                        newData[i] = 0;
+                    }
+                }
+                
+                const format = 1; // PCM
+                const bytesPerSample = bitDepth / 8;
+                const blockAlign = numberOfChannels * bytesPerSample;
+                const byteRate = targetSampleRate * blockAlign;
+                const dataSize = newLength * blockAlign;
+                const fileSize = 36 + dataSize;
+                
+                const arrayBuffer = new ArrayBuffer(44 + dataSize);
+                const view = new DataView(arrayBuffer);
+                
+                // WAV header
+                const writeString = (offset, string) => {
+                    for (let i = 0; i < string.length; i++) {
+                        view.setUint8(offset + i, string.charCodeAt(i));
+                    }
+                };
+                
+                writeString(0, 'RIFF');
+                view.setUint32(4, fileSize, true);
+                writeString(8, 'WAVE');
+                writeString(12, 'fmt ');
+                view.setUint32(16, 16, true);
+                view.setUint16(20, format, true);
+                view.setUint16(22, numberOfChannels, true);
+                view.setUint32(24, targetSampleRate, true);
+                view.setUint32(28, byteRate, true);
+                view.setUint16(32, blockAlign, true);
+                view.setUint16(34, bitDepth, true);
+                writeString(36, 'data');
+                view.setUint32(40, dataSize, true);
+                
+                // Ses verisi - MAXIMUM sıkıştırma
+                let offset = 44;
+                
+                if (bitDepth === 8) {
+                    // 8-bit unsigned (çok küçük)
+                    for (let i = 0; i < newLength; i++) {
+                        const sample = Math.max(-1, Math.min(1, newData[i]));
+                        const intSample = Math.round((sample + 1) * 127.5); // 0-255 arası
+                        view.setUint8(offset, intSample);
+                        offset += 1;
+                    }
+                } else {
+                    // 16-bit signed
+                    const maxValue = Math.pow(2, bitDepth - 1) - 1;
+                    const minValue = -Math.pow(2, bitDepth - 1);
+                    
+                    for (let i = 0; i < newLength; i++) {
+                        const sample = Math.max(-1, Math.min(1, newData[i]));
+                        const intSample = Math.round(sample * maxValue);
+                        const clampedSample = Math.max(minValue, Math.min(maxValue, intSample));
+                        view.setInt16(offset, clampedSample, true);
+                        offset += 2;
+                    }
+                }
+                
+                return new Blob([arrayBuffer], { type: 'audio/wav' });
+            }
+
+            generateFilename(segmentIndex) {
+                const fileName = this.currentFile.name;
+                const baseName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+                const extension = this.outputFormat;
+                return `${baseName}_segment_${segmentIndex.toString().padStart(2, '0')}.${extension}`;
+            }
+
+            addDownloadItem(segmentInfo) {
+                const item = document.createElement('div');
+                item.className = 'download-item';
+                
+                const segmentDuration = this.formatDuration(segmentInfo.duration);
+                const startTime = this.formatDuration(segmentInfo.startTime);
+                const endTime = this.formatDuration(segmentInfo.endTime);
+                const fileSize = this.formatFileSize(segmentInfo.blob.size);
+                
+                // Son segment ve uzatılmışsa özel gösterim
+                const isExtended = segmentInfo.duration > (this.SEGMENT_DURATION_MINUTES * 60) + 10; // 10 saniye tolerans
+                const extendedIndicator = isExtended ? ' 🔗' : '';
+                const extendedNote = isExtended ? '<br><span style="font-size: 0.8em; color: #f57c00;">Son segment birleştirildi</span>' : '';
+                
+                // Daha açık zaman gösterimi
+                const timeRange = `${startTime} - ${endTime} arası`;
+                const durationInfo = `(${segmentDuration})`;
+                
+                item.innerHTML = `
+                    <div class="download-info">
+                        <div class="download-title">Segment ${segmentInfo.index}${extendedIndicator}</div>
+                        <div class="download-details">
+                            <div style="font-weight: 500; color: #333;">${timeRange}</div>
+                            <div style="color: #666; margin-top: 2px;">Toplam süre: ${durationInfo} | Boyut: ${fileSize}</div>
+                            ${extendedNote}
+                        </div>
+                    </div>
+                    <button class="download-button" onclick="splitter.downloadSegment(${segmentInfo.index - 1})">
+                        ⬇️ İndir
+                    </button>
+                `;
+                
+                this.downloadItems.appendChild(item);
+            }
+
+            downloadSegment(index) {
+                const segment = this.processedSegments[index];
+                if (!segment) return;
+                
+                const url = URL.createObjectURL(segment.blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = segment.filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+
+            async downloadAllSegments() {
+                if (!this.processedSegments || this.processedSegments.length === 0) {
+                    alert('İndirilecek segment bulunamadı!');
+                    return;
+                }
+
+                try {
+                    // ZIP dosyası oluştur
+                    const zip = new JSZip();
+                    
+                    // Klasör adını oluştur: "dosya adı [Xx]" - Uzantıyı doğru çıkar
+                    const fileName = this.currentFile.name;
+                    const baseName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+                    const segmentCount = this.processedSegments.length;
+                    const folderName = `${baseName} [${segmentCount}x]`;
+                    
+                    // Klasör oluştur
+                    const folder = zip.folder(folderName);
+                    
+                    // Butonun durumunu güncelle
+                    this.downloadAllButton.disabled = true;
+                    this.downloadAllButton.textContent = '📦 ZIP Hazırlanıyor...';
+                    
+                    // Her segmenti ZIP'e ekle
+                    for (let i = 0; i < this.processedSegments.length; i++) {
+                        const segment = this.processedSegments[i];
+                        
+                        // Progress göster
+                        const progress = Math.round((i / this.processedSegments.length) * 100);
+                        this.downloadAllButton.textContent = `📦 ZIP Hazırlanıyor... %${progress}`;
+                        
+                        // Dosya ismini oluştur
+                        const fileName = segment.filename;
+                        
+                        // Blob'u ZIP'e ekle
+                        folder.file(fileName, segment.blob);
+                        
+                        // UI'nin donmaması için kısa bekleme
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }
+                    
+                    // ZIP'i oluştur ve indir
+                    this.downloadAllButton.textContent = '📦 ZIP İndiriliyor...';
+                    
+                    const zipBlob = await zip.generateAsync({
+                        type: "blob",
+                        compression: "DEFLATE",
+                        compressionOptions: {
+                            level: 6
+                        }
+                    });
+                    
+                    // ZIP dosyasını indir
+                    const zipFileName = `${baseName} [${segmentCount}x].zip`;
+                    const url = URL.createObjectURL(zipBlob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = zipFileName;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    // Butonu eski haline getir
+                    this.downloadAllButton.disabled = false;
+                    this.downloadAllButton.textContent = '📦 Tümünü İndir (ZIP)';
+                    
+                    // Başarı mesajı
+                    alert(`✅ ${segmentCount} segment başarıyla ZIP'lendi!\nDosya: ${zipFileName}`);
+                    
+                } catch (error) {
+                    console.error('ZIP oluşturma hatası:', error);
+                    alert('ZIP oluşturulurken bir hata oluştu: ' + error.message);
+                    
+                    // Butonu eski haline getir
+                    this.downloadAllButton.disabled = false;
+                    this.downloadAllButton.textContent = '📦 Tümünü İndir (ZIP)';
+                }
+            }
+
+            async downloadAllIndividualSegments() {
+                if (!this.processedSegments || this.processedSegments.length === 0) {
+                    alert('İndirilecek segment bulunamadı!');
+                    return;
+                }
+
+                try {
+                    // Butonun durumunu güncelle
+                    this.downloadAllIndividualButton.disabled = true;
+                    this.downloadAllIndividualButton.textContent = '📥 Dosyalar İndiriliyor...';
+
+                    // Her segmenti tek tek indir (eski yöntem)
+                    for (let i = 0; i < this.processedSegments.length; i++) {
+                        const progress = Math.round(((i + 1) / this.processedSegments.length) * 100);
+                        this.downloadAllIndividualButton.textContent = `📥 İndiriliyor... ${i + 1}/${this.processedSegments.length} (%${progress})`;
+                        
+                        // Segmenti indir
+                        this.downloadSegment(i);
+                        
+                        // Tarayıcının indirmeleri işlemesi için bekleme
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                    }
+
+                    // Butonu eski haline getir
+                    this.downloadAllIndividualButton.disabled = false;
+                    this.downloadAllIndividualButton.textContent = '📥 Tümünü Tek Tek İndir';
+                    
+                    // Başarı mesajı
+                    alert(`✅ ${this.processedSegments.length} segment tek tek indirildi!\n\n💡 İpucu: Dosyalar varsayılan indirme klasörünüzde ayrı ayrı kaydedildi.`);
+
+                } catch (error) {
+                    console.error('Tek tek indirme hatası:', error);
+                    alert('Dosyalar indirilirken bir hata oluştu: ' + error.message);
+                    
+                    // Butonu eski haline getir
+                    this.downloadAllIndividualButton.disabled = false;
+                    this.downloadAllIndividualButton.textContent = '📥 Tümünü Tek Tek İndir';
+                }
+            }
+
+            async downloadAllToFolder() {
+                if (!this.processedSegments || this.processedSegments.length === 0) {
+                    alert('İndirilecek segment bulunamadı!');
+                    return;
+                }
+
+                // Tarayıcı desteğini kontrol et
+                if (!('showDirectoryPicker' in window)) {
+                    alert('❌ Klasör seçme özelliği bu tarayıcıda desteklenmiyor.\n\n💡 Chrome veya Edge tarayıcısı kullanmanız önerilir.\n\nAlternatif olarak ZIP indirme seçeneğini kullanabilirsiniz.');
+                    return;
+                }
+
+                try {
+                    // Butonun durumunu güncelle
+                    this.downloadToFolderButton.disabled = true;
+                    this.downloadToFolderButton.textContent = '📁 Klasör Seçiliyor...';
+
+                    // Kullanıcıdan klasör seçmesini iste
+                    const directoryHandle = await window.showDirectoryPicker();
+                    
+                    // Klasör adını oluştur: "dosya adı [Xx]" - Uzantıyı doğru çıkar
+                    const fileName = this.currentFile.name;
+                    const baseName = fileName.substring(0, fileName.lastIndexOf('.')) || fileName;
+                    const segmentCount = this.processedSegments.length;
+                    const folderName = `${baseName} [${segmentCount}x]`;
+                    
+                    // Alt klasör oluştur
+                    let subDirectoryHandle;
+                    try {
+                        subDirectoryHandle = await directoryHandle.getDirectoryHandle(folderName, { create: true });
+                    } catch (error) {
+                        // Klasör oluşturulamazsa ana klasöre kaydet
+                        subDirectoryHandle = directoryHandle;
+                    }
+
+                    // Her segmenti klasöre kaydet
+                    for (let i = 0; i < this.processedSegments.length; i++) {
+                        const segment = this.processedSegments[i];
+                        const progress = Math.round(((i + 1) / this.processedSegments.length) * 100);
+                        
+                        this.downloadToFolderButton.textContent = `📁 Kaydediliyor... ${i + 1}/${this.processedSegments.length} (%${progress})`;
+                        
+                        // Dosya oluştur ve yazma
+                        const fileHandle = await subDirectoryHandle.getFileHandle(segment.filename, { create: true });
+                        const writableStream = await fileHandle.createWritable();
+                        await writableStream.write(segment.blob);
+                        await writableStream.close();
+                        
+                        // UI güncellemesi için kısa bekleme
+                        await new Promise(resolve => setTimeout(resolve, 100));
+                    }
+
+                    // Butonu eski haline getir
+                    this.downloadToFolderButton.disabled = false;
+                    this.downloadToFolderButton.textContent = '📁 Klasöre Kaydet';
+                    
+                    // Başarı mesajı
+                    alert(`✅ ${this.processedSegments.length} segment başarıyla kaydedildi!\n\n📁 Konum: ${directoryHandle.name}/${folderName}\n\n💡 Dosyalar seçtiğiniz klasörde düzenli bir şekilde organize edildi.`);
+
+                } catch (error) {
+                    console.error('Klasöre kaydetme hatası:', error);
+                    
+                    let errorMessage = 'Dosyalar klasöre kaydedilirken bir hata oluştu.';
+                    
+                    if (error.name === 'AbortError') {
+                        errorMessage = 'Klasör seçimi iptal edildi.';
+                    } else if (error.name === 'NotAllowedError') {
+                        errorMessage = 'Klasöre yazma izni verilmedi.';
+                    }
+                    
+                    alert(errorMessage);
+                    
+                    // Butonu eski haline getir
+                    this.downloadToFolderButton.disabled = false;
+                    this.downloadToFolderButton.textContent = '📁 Klasöre Kaydet';
+                }
+            }
+
+            calculateSegments() {
+                if (!this.audioBuffer) return;
+                
+                const totalDuration = this.audioBuffer.duration;
+                const segmentDurationSeconds = this.SEGMENT_DURATION_MINUTES * 60;
+                const MIN_LAST_SEGMENT_DURATION = this.MIN_LAST_SEGMENT_DURATION; // Yeni eklenen input'tan al
+                
+                // Segment sayısını düzgün hesapla
+                let segmentCount = Math.floor(totalDuration / segmentDurationSeconds);
+                let remainingTime = totalDuration % segmentDurationSeconds;
+                
+                // Eğer kalan süre 1 saniyeden fazlaysa ek segment say
+                if (remainingTime >= 1) {
+                    segmentCount += 1;
+                }
+                
+                // Son segment 2 dakikadan az ise, bir önceki segmente birleştir
+                if (remainingTime > 0 && remainingTime < MIN_LAST_SEGMENT_DURATION && segmentCount > 1) {
+                    segmentCount -= 1; // Son segmenti iptal et
+                    remainingTime = 0; // Kalan süre sıfırla (önceki segmente eklenecek)
+                    console.log('Son segment çok kısa, bir önceki segmente birleştirildi');
+                }
+                
+                this.fileDuration.textContent = this.formatDuration(totalDuration);
+                this.segmentCount.textContent = segmentCount;
+                
+                // İşleme butonunu göster
+                this.processButton.style.display = 'block';
+                
+                // Segment preview'ı güncelle
+                this.updateSegmentPreview();
+                
+                console.log('Segments calculated:', {
+                    totalDuration,
+                    segmentCount,
+                    segmentDurationMinutes: this.SEGMENT_DURATION_MINUTES,
+                    segmentDurationSeconds: segmentDurationSeconds,
+                    remainingTime: remainingTime,
+                    minLastSegmentDuration: MIN_LAST_SEGMENT_DURATION
+                });
+            }
+
+            updateProgress(percent, text) {
+                this.progressFill.style.width = percent + '%';
+                this.progressText.textContent = text;
+            }
+
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+
+            formatDuration(seconds) {
+                const hours = Math.floor(seconds / 3600);
+                const minutes = Math.floor((seconds % 3600) / 60);
+                const secs = Math.floor(seconds % 60);
+                
+                if (hours > 0) {
+                    return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                } else {
+                    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+                }
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+                
+                // Hide progress and other panels
+                this.progressContainer.style.display = 'none';
+                this.settingsPanel.style.display = 'none';
+                this.fileInfo.style.display = 'none';
+                this.processButton.style.display = 'none';
+                this.downloadSection.style.display = 'none';
+            }
+
+            hideError() {
+                this.errorMessage.style.display = 'none';
+            }
+        }
+
+        // Global splitter instance
+        let splitter;
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM loaded, initializing audio splitter');
+            splitter = new OptimizedAudioSplitter();
+        });
+    </script>
+</body>
+</html>
