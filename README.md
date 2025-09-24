@@ -1,0 +1,1 @@
+# Ses-Dosyasi-Kirpma
