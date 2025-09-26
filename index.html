@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ses Dosyası Kırpma Aracı - Optimize</title>
-    <!-- JSZip kütüphanesi -->
+    <title>Medya Dosyasından Ses Kırpma Aracı - Optimize</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <style>
         * {
@@ -493,16 +492,16 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🎵 Optimize Ses Dosyası Kırpma Aracı</h1>
-            <p>Ses dosyalarınızı istediğiniz sürelerde segmentlere bölün - Akıllı sıkıştırma ve segment birleştirme ile</p>
+            <h1>🎵 Medya Dosyasından Ses Kırpma Aracı</h1>
+            <p>Ses veya video dosyalarınızın sesini istediğiniz sürelerde segmentlere bölün</p>
         </div>
 
         <div class="main-content">
             <div class="upload-area" id="uploadArea">
                 <div class="upload-icon">📁</div>
                 <div class="upload-text">Dosyayı Buraya Sürükle veya Tıkla</div>
-                <div class="upload-subtext">Maksimum 500MB - MP3, WAV, M4A, OGG formatları desteklenir</div>
-                <input type="file" id="fileInput" accept="audio/*,.mp3,.wav,.m4a,.ogg">
+                <div class="upload-subtext">Maksimum 500MB - MP3, WAV, M4A, OGG, MP4, MOV, WEBM formatları desteklenir</div>
+                <input type="file" id="fileInput" accept="audio/*,video/*,.mp3,.wav,.m4a,.ogg,.mp4,.mov,.webm">
             </div>
 
             <div class="error-message" id="errorMessage"></div>
@@ -596,7 +595,7 @@
                         </div>
                         <div class="size-item">
                             <div class="size-value" id="estimatedSize">-</div>
-                            <div class="size-label">Tahmini</div>
+                            <div class="size-label">Tahmini Ses</div>
                         </div>
                         <div class="size-item">
                             <div class="size-value" id="savingsPercent">-</div>
@@ -617,7 +616,7 @@
                     <span class="info-value" id="fileSize">-</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Toplam Süre:</span>
+                    <span class="info-label">Toplam Ses Süresi:</span>
                     <span class="info-value" id="fileDuration">-</span>
                 </div>
                 <div class="info-row">
@@ -634,7 +633,7 @@
             </div>
 
             <button class="process-button" id="processButton">
-                🎵 Ses Dosyasını Kırp ve İndir
+                🎵 Sesi Kırp ve İndir
             </button>
 
             <div class="download-section" id="downloadSection">
@@ -654,7 +653,7 @@
             </div>
 
             <div class="supported-formats">
-                <strong>Desteklenen Formatlar:</strong> MP3, WAV, M4A, OGG | 
+                <strong>Desteklenen Formatlar:</strong> MP3, WAV, M4A, OGG, MP4, MOV, WEBM | 
                 <strong>Optimize Çıktı:</strong> MP3* (optimize WAV) veya WAV | 
                 <strong>*MP3:</strong> Gerçek MP3 değil, optimize WAV formatı
             </div>
@@ -671,7 +670,8 @@
                 this.MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
                 this.processedSegments = []; // İşlenmiş segmentleri tutacak
                 
-                this.supportedFormats = ['mp3', 'wav', 'm4a', 'ogg'];
+                // *** GÜNCELLEME: Video formatları eklendi ***
+                this.supportedFormats = ['mp3', 'wav', 'm4a', 'ogg', 'mp4', 'mov', 'webm'];
                 
                 // Ayarlar
                 this.outputFormat = 'mp3';
@@ -1030,7 +1030,7 @@
                 this.downloadSection.style.display = 'none';
                 this.processButton.style.display = 'none';
                 this.processButton.disabled = false;
-                this.processButton.textContent = '🎵 Ses Dosyasını Kırp ve İndir';
+                this.processButton.textContent = '🎵 Sesi Kırp ve İndir';
                 
                 // Download butonlarını sıfırla
                 this.downloadAllButton.disabled = false;
@@ -1059,19 +1059,19 @@
             }
 
             validateFile(file) {
-                // Format kontrolü
                 const fileExtension = file.name.split('.').pop().toLowerCase();
                 const mimeType = file.type.toLowerCase();
                 
                 const isValidExtension = this.supportedFormats.includes(fileExtension);
-                const isValidMimeType = mimeType.startsWith('audio/');
+                // *** GÜNCELLEME: Video MIME türü kontrolü eklendi ***
+                const isValidMimeType = mimeType.startsWith('audio/') || mimeType.startsWith('video/');
                 
                 if (!isValidExtension && !isValidMimeType) {
-                    this.showError('Bu dosya formatı desteklenmiyor. Lütfen MP3, WAV, M4A veya OGG dosyası yükleyin.');
+                    // *** GÜNCELLEME: Hata mesajı güncellendi ***
+                    this.showError('Bu dosya formatı desteklenmiyor. Lütfen desteklenen bir ses veya video dosyası yükleyin.');
                     return false;
                 }
 
-                // Boyut kontrolü
                 if (file.size > this.MAX_FILE_SIZE) {
                     this.showError('Dosya çok büyük. Maksimum 500MB yükleyebilirsiniz.');
                     return false;
@@ -1088,15 +1088,13 @@
 
             async createAudioBuffer(file) {
                 try {
-                    // AudioContext oluştur
                     if (!this.audioContext) {
                         this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                     }
                     
-                    // Dosyayı ArrayBuffer olarak oku
                     const arrayBuffer = await this.fileToArrayBuffer(file);
                     
-                    // Audio buffer oluştur
+                    // Bu fonksiyon hem ses hem de video dosyalarından ses izini çözebilir
                     this.audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
                     
                     console.log('Audio buffer created:', {
@@ -1106,7 +1104,7 @@
                     });
                     
                 } catch (error) {
-                    throw new Error('Ses dosyası okunamadı: ' + error.message);
+                    throw new Error('Dosyanın ses izi okunamadı: ' + error.message);
                 }
             }
 
@@ -1121,7 +1119,7 @@
 
             async startProcessing() {
                 if (!this.audioBuffer) {
-                    this.showError('Önce bir ses dosyası seçmelisiniz.');
+                    this.showError('Önce bir dosya seçmelisiniz.');
                     return;
                 }
 
@@ -1140,7 +1138,7 @@
                     console.error('İşleme hatası:', error);
                     this.showError('İşleme sırasında bir hata oluştu: ' + error.message);
                     this.processButton.disabled = false;
-                    this.processButton.textContent = '🎵 Ses Dosyasını Kırp ve İndir';
+                    this.processButton.textContent = '🎵 Sesi Kırp ve İndir';
                 }
             }
 
