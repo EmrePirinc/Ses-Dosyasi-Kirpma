@@ -1,75 +1,79 @@
-# Ses Dosyası Kırpma (Audio Trimmer)
+# 🎵 Medya Dosyasından Ses Kırpma Aracı (Audio Splitter)
 
-Bu proje, tarayıcı üzerinden herhangi bir sunucuya yükleme yapmadan, hızlı ve güvenli bir şekilde ses dosyalarını (MP3, WAV vb.) kırpmanıza olanak tanıyan web tabanlı bir araçtır.
+Bu proje, hem ses hem de video dosyalarından ses izini ayıklayıp, belirlediğiniz sürelerde segmentlere bölen profesyonel, web tabanlı bir araçtır. Tamamen tarayıcı üzerinde çalışır ve dosyalarınız asla bir sunucuya yüklenmez.
 
 [English description below](#english)
 
 ---
 
-## 🚀 Özellikler
+## 🚀 Öne Çıkan Özellikler
 
-- **Hızlı İşleme:** Tamamen tarayıcı üzerinde (client-side) çalışır, dosyalar sunucuya gönderilmez.
-- **Kolay Kullanım:** Sürükle-bırak veya dosya seçme ile hızlı yükleme.
-- **Hassas Kesim:** Başlangıç ve bitiş sürelerini manuel olarak veya görsel üzerinden belirleme.
-- **Önizleme:** Kırpılan bölümü indirmeden önce dinleme imkanı.
-- **Güvenli:** İşlemler yerel cihazınızda gerçekleştiği için gizliliğiniz korunur.
+- **Geniş Format Desteği:** 
+  - **Ses:** MP3, WAV, M4A, OGG
+  - **Video:** MP4, MOV, WEBM (Videolardaki sesi otomatik ayıklar)
+- **Akıllı Segmentasyon:** Ses dosyasını belirlediğiniz sürelere (örneğin 20 dakikalık bölümler) böler.
+- **Son Segment Birleştirme:** Eğer son parça çok kısaysa (belirlediğiniz minimum sürenin altındaysa), otomatik olarak bir önceki parçaya eklenir.
+- **Boyut Optimizasyonu:** Çıktı kalitesini (Düşük, Orta, Yüksek) ayarlayarak dosya boyutunu %80'e varan oranlarda küçültebilirsiniz.
+- **Esnek İndirme Seçenekleri:** 
+  - Segmentleri tek tek indirme.
+  - Tüm segmentleri tek bir **ZIP** dosyasında indirme.
+  - **Klasöre Kaydet:** Dosyaları doğrudan bilgisayarınızdaki bir klasöre topluca kaydetme (Chrome/Edge desteği).
+- **Gizlilik Odaklı:** Tüm işlemler yerel cihazınızda (client-side) yapılır; internet bağlantısı gerekmez ve verileriniz güvendedir.
+- **Görsel Önizleme:** İşlem öncesi segment sayısını ve tahmini dosya boyutunu görebilirsiniz.
 
-## 🛠️ Kullanılan Teknolojiler
+## 🛠️ Teknik Detaylar
 
-- **HTML5 & CSS3:** Modern ve kullanıcı dostu arayüz.
-- **JavaScript (Web Audio API):** Ses işleme ve zamanlama mantığı.
-- **Bootstrap (Opsiyonel):** Responsive (mobil uyumlu) tasarım.
+- **Web Audio API:** Yüksek performanslı ses işleme.
+- **JSZip:** Tarayıcı tarafında dinamik ZIP oluşturma.
+- **File System Access API:** Klasöre doğrudan yazma desteği.
+- **Vanilla JS:** Ekstra bir framework gerektirmeyen saf JavaScript mimarisi.
 
-## 📦 Kurulum ve Çalıştırma
+## 📖 Kullanım Kılavuzu
 
-Bu projeyi çalıştırmak için herhangi bir derleme veya sunucu kurulumuna gerek yoktur.
-
-1. Projeyi klonlayın:
-   ```bash
-   git clone https://github.com/EmrePirinc/Ses-Dosyasi-Kirpma.git
-   ```
-2. Proje klasörüne gidin ve `index.html` dosyasını favori tarayıcınızda açın.
-
-## 📖 Kullanım
-
-1. **Dosya Yükle:** "Dosya Seç" butonuna basarak bilgisayarınızdan bir ses dosyası seçin.
-2. **Aralık Belirle:** Kaydırıcıları (slider) kullanarak veya zaman girişlerini doldurarak kırpılacak alanı seçin.
-3. **Dinle:** Seçtiğiniz kısmın doğruluğunu kontrol etmek için "Oynat" butonuna basın.
-4. **Kırp ve İndir:** "Kırp ve İndir" butonuna tıklayarak yeni ses dosyanızı kaydedin.
+1. **Dosya Yükleme:** `index.html` dosyasını tarayıcınızda açın ve medya dosyanızı sürükleyip bırakın. (Maks. 500MB)
+2. **Ayarları Yapılandırma:**
+   - **Segment Süresi:** Her bir ses parçasının kaç dakika olacağını seçin.
+   - **Minimum Son Segment:** Son parçanın çok kısa kalmasını istemiyorsanız bu süreyi ayarlayın.
+   - **Format & Kalite:** MP3 (optimize) veya WAV seçimi yapın, kalite seviyesini belirleyin.
+3. **İşleme:** "Sesi Kırp ve İndir" butonuna tıklayın.
+4. **Kaydetme:** İşlem bittiğinde size en uygun indirme yöntemini seçerek dosyalarınızı alın.
 
 ---
 
 <a name="english"></a>
-# Audio Trimmer (Ses Dosyası Kırpma)
+# 🎵 Media to Audio Splitter
 
-A lightweight, web-based tool designed to trim or cut audio files directly in your browser without requiring a backend server.
+A professional web-based tool that extracts audio from both audio and video files and splits them into segments based on your preferred duration. It runs entirely in the browser, ensuring your files are never uploaded to a server.
 
-## 🚀 Features
+## 🚀 Key Features
 
-- **Fast Processing:** Works entirely client-side; your files are never uploaded to a server.
-- **User Friendly:** Simple interface for quick audio editing.
-- **Precise Trimming:** Define start and end points accurately.
-- **Preview:** Listen to the selected segment before exporting.
-- **Privacy Focused:** Your data stays on your local machine.
+- **Wide Format Support:** 
+  - **Audio:** MP3, WAV, M4A, OGG
+  - **Video:** MP4, MOV, WEBM (Automatically extracts audio from video)
+- **Smart Segmentation:** Splits audio into fixed durations (e.g., 20-minute chunks).
+- **Last Segment Merging:** If the final piece is too short, it automatically merges with the previous segment.
+- **Size Optimization:** Adjust output quality (Low, Medium, High) to reduce file size by up to 80%.
+- **Flexible Export Options:** 
+  - Download segments individually.
+  - Download all segments in a single **ZIP** file.
+  - **Save to Folder:** Batch save files directly to a local directory (Supported on Chrome/Edge).
+- **Privacy Focused:** All processing is done client-side; no internet connection is required after loading, and your data stays safe.
 
-## 🛠️ Technologies Used
+## 🛠️ Technical Details
 
-- **HTML5 & CSS3**
-- **JavaScript (Web Audio API)**
+- **Web Audio API:** High-performance audio processing.
+- **JSZip:** Dynamic ZIP creation on the client side.
+- **File System Access API:** Direct folder writing support.
 
-## 📦 Installation & Setup
+## 📖 How to Use
 
-No installation or server setup is required.
-
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/EmrePirinc/Ses-Dosyasi-Kirpma.git
-   ```
-2. Open `index.html` in any modern web browser.
-
-## 🤝 Katkıda Bulunma (Contributing)
-
-Her türlü katkıda bulunmaya açığız! Bir hata bulursanız veya yeni bir özellik eklemek isterseniz lütfen bir "Issue" açın veya "Pull Request" gönderin.
+1. **Upload:** Open `index.html` in your browser and drag & drop your media file. (Max 500MB)
+2. **Configure Settings:**
+   - **Segment Duration:** Choose the length of each audio piece.
+   - **Min Last Segment:** Set a threshold to prevent tiny final segments.
+   - **Format & Quality:** Select MP3 (optimized) or WAV and choose the quality level.
+3. **Process:** Click the "Trim and Download" button.
+4. **Save:** Once finished, choose your preferred download method to save your files.
 
 ## 📄 Lisans (License)
 
