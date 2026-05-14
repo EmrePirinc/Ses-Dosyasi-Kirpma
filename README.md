@@ -1,5 +1,7 @@
 # 🎵 Medya Dosyasından Ses Kırpma Aracı (Audio Splitter)
 
+**🔗 Canlı Demo:** [https://emrepirinc.github.io/Ses-Dosyasi-Kirpma/](https://emrepirinc.github.io/Ses-Dosyasi-Kirpma/)
+
 Bu proje, hem ses hem de video dosyalarından ses izini ayıklayıp, belirlediğiniz sürelerde segmentlere bölen profesyonel, web tabanlı bir araçtır. Tamamen tarayıcı üzerinde çalışır ve dosyalarınız asla bir sunucuya yüklenmez.
 
 [English description below](#english)
@@ -42,6 +44,8 @@ Bu proje, hem ses hem de video dosyalarından ses izini ayıklayıp, belirlediğ
 
 <a name="english"></a>
 # 🎵 Media to Audio Splitter
+
+**🔗 Live Demo:** [https://emrepirinc.github.io/Ses-Dosyasi-Kirpma/](https://emrepirinc.github.io/Ses-Dosyasi-Kirpma/)
 
 A professional web-based tool that extracts audio from both audio and video files and splits them into segments based on your preferred duration. It runs entirely in the browser, ensuring your files are never uploaded to a server.
 
